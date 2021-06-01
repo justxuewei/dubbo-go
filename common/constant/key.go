@@ -313,6 +313,9 @@ const (
 const (
 	SUBSCRIBED_SERVICE_NAMES_KEY               = "subscribed-services"
 	PROVIDED_BY                                = "provided-by"
+	// EXPORTED_SERVICES_REVISION_PROPERTY_NAME
+	// Xavier: EXPORTED_SERVICES_REVISION_PROPERTY_NAME is changed from "dubbo.exported-services.revision" to
+	// 	"dubbo.metadata.revision" at Dubbo-go v3.
 	EXPORTED_SERVICES_REVISION_PROPERTY_NAME   = "dubbo.metadata.revision"
 	SUBSCRIBED_SERVICES_REVISION_PROPERTY_NAME = "dubbo.subscribed-services.revision"
 	SERVICE_INSTANCE_SELECTOR                  = "service-instance-selector"

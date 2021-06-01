@@ -57,16 +57,20 @@ func init() {
 // This implementation is based on ServiceDiscovery abstraction and ServiceNameMapping
 // In order to keep compatible with interface-level registry，
 // this implementation is
+// Xavier: serviceDiscoveryRegistry represents a registry, ServiceDiscovery is a set
+// 	of operations for serviceDiscovery
 type serviceDiscoveryRegistry struct {
 	lock                             sync.RWMutex
 	url                              *common.URL
 	serviceDiscovery                 registry.ServiceDiscovery
 	subscribedServices               *gxset.HashSet
 	serviceNameMapping               mapping.ServiceNameMapping
+	// Xavier: typo: metaDataService -> metadataService
 	metaDataService                  service.MetadataService
 	registeredListeners              *gxset.HashSet
 	subscribedURLsSynthesizers       []synthesizer.SubscribedURLsSynthesizer
 	serviceRevisionExportedURLsCache map[string]map[string][]*common.URL
+	// Xavier: app -> listener
 	serviceListeners                 map[string]registry.ServiceInstancesChangedListener
 }
 
@@ -74,6 +78,7 @@ func newServiceDiscoveryRegistry(url *common.URL) (registry.Registry, error) {
 
 	tryInitMetadataService(url)
 
+	// Xavier: Create an instance of EventPublishingServiceDiscovery
 	serviceDiscovery, err := creatServiceDiscovery(url)
 	if err != nil {
 		return nil, err
@@ -124,6 +129,8 @@ func (s *serviceDiscoveryRegistry) UnSubscribe(url *common.URL, listener registr
 	return nil
 }
 
+// Xavier: create an instance of serviceDiscovery, named originServiceDiscovery,
+// 	return an EventPublishingServiceDiscovery containing the originServiceDiscovery
 func creatServiceDiscovery(url *common.URL) (registry.ServiceDiscovery, error) {
 	sdcName := url.GetParam(constant.SERVICE_DISCOVERY_KEY, "")
 	sdc, ok := config.GetBaseConfig().GetServiceDiscoveries(sdcName)
@@ -202,27 +209,43 @@ func shouldRegister(url *common.URL) bool {
 	return false
 }
 
+// Subscribe
+/* Xavier:
+	parameters:
+	- url: url for a service
+	- notify: registryDirectory
+*/
 func (s *serviceDiscoveryRegistry) Subscribe(url *common.URL, notify registry.NotifyListener) error {
 	if !shouldSubscribe(url) {
 		return nil
 	}
+	// Xavier: store the url into metadataService's subscribedServiceURLs
 	_, err := s.metaDataService.SubscribeURL(url)
 	if err != nil {
 		return perrors.WithMessage(err, "subscribe url error: "+url.String())
 	}
+	// Xavier: get services from registry using curator-x-discovery in the case of using zookeeper as registry,
+	// 	services is a hash set containing all services in an application
 	services := s.getServices(url)
 	if services.Empty() {
 		return perrors.Errorf("Should has at least one way to know which services this interface belongs to, "+
 			"subscription url:%s", url.String())
 	}
 	// FIXME ServiceNames.String() is not good
+	// Xavier: new features in dubbo-go v3,
+	// 	serviceNamesKey == HashSetUserInfoService
 	serviceNamesKey := services.String()
+	// Xavier: group/iface:version:protocol
 	protocolServiceKey := url.ServiceKey() + ":" + url.Protocol
+	// Xavier: listener is an instance of serviceInstancesChangedListener
 	listener := s.serviceListeners[serviceNamesKey]
 	if listener == nil {
 		listener = event.NewServiceInstancesChangedListener(services)
+		// Xavier: serviceNameTmp is the name of service, "UserInfoServer"
 		for _, serviceNameTmp := range services.Values() {
 			serviceName := serviceNameTmp.(string)
+			// Xavier: call EventPublishingServiceDiscovery::GetInstances() -> zookeeperServiceDiscovery::GetInstances()
+			// 	instances is an array of DefaultServiceInstance
 			instances := s.serviceDiscovery.GetInstances(serviceName)
 			err = listener.OnEvent(&registry.ServiceInstancesChangedEvent{
 				ServiceName: serviceName,

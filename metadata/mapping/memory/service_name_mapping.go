@@ -41,6 +41,8 @@ func (i *InMemoryServiceNameMapping) Map(serviceInterface string, group string, 
 	return nil
 }
 
+// Get
+// QUESTION: Xavier: Does the HashSet only have one element?
 func (i *InMemoryServiceNameMapping) Get(serviceInterface string, group string, version string, protocol string) (*gxset.HashSet, error) {
 	return gxset.NewSet(config.GetApplicationConfig().Name), nil
 }

@@ -132,6 +132,7 @@ func (proto *registryProtocol) GetRegistries() []registry.Registry {
 }
 
 // Refer provider service from registry center
+// Xavier: url represents to registry, url.SubUrl represents to a concrete service
 func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 	registryUrl := url
 	serviceUrl := registryUrl.SubURL
@@ -139,6 +140,7 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 		registryUrl.Protocol = registryUrl.GetParam(constant.REGISTRY_KEY, "")
 	}
 
+	// Xavier: for application model, reg is an instance of serviceDiscoveryRegistry
 	var reg registry.Registry
 	if regI, loaded := proto.registries.Load(registryUrl.Key()); !loaded {
 		reg = getRegistry(registryUrl)
@@ -148,6 +150,7 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 	}
 
 	// new registry directory for store service url from registry
+	// Xavier: call NewRegistryDirectory eventually
 	directory, err := extension.GetDefaultRegistryDirectory(registryUrl, reg)
 	if err != nil {
 		logger.Errorf("consumer service %v create registry directory error, error message is %s, and will return nil invoker!",
@@ -155,6 +158,7 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 		return nil
 	}
 
+	// Xavier: Provider do register, on the contrary, consumer will not perform
 	err = reg.Register(serviceUrl)
 	if err != nil {
 		logger.Errorf("consumer service %v register registry %v error, error message is %s",

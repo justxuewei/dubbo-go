@@ -211,6 +211,7 @@ func (zksd *zookeeperServiceDiscovery) GetServices() *gxset.HashSet {
 }
 
 // GetInstances will return the instances in a service
+// Xavier: call curator_discovery.ServiceDiscovery::QueryForInstances()
 func (zksd *zookeeperServiceDiscovery) GetInstances(serviceName string) []registry.ServiceInstance {
 	criss, err := zksd.csd.QueryForInstances(serviceName)
 	if err != nil {
@@ -346,6 +347,10 @@ func (zksd *zookeeperServiceDiscovery) toZookeeperInstance(cris *curator_discove
 		return nil
 	}
 	md := make(map[string]string, len(mdi))
+	// Xavier: example of md:
+	// 	- "dubbo.endpoints" -> "[{\"port\":20001,\"protocol\":\"dubbo\"}]"
+	// 	- "dubbo.exported-services.revision": "480513435"
+	// 	- ...
 	for k, v := range mdi {
 		md[k] = fmt.Sprint(v)
 	}

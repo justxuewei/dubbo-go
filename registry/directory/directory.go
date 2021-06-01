@@ -51,6 +51,8 @@ func init() {
 
 // RegistryDirectory implementation of Directory:
 // Invoker list returned from this Directory's list method have been filtered by Routers
+// Xavier: RegistryDirectory is a directory containing a series of invokers for a service.
+// 	RegistryDirectory conforms to NotifyListener.
 type RegistryDirectory struct {
 	directory.BaseDirectory
 	cacheInvokers                  []protocol.Invoker
@@ -69,6 +71,11 @@ type RegistryDirectory struct {
 }
 
 // NewRegistryDirectory will create a new RegistryDirectory
+// Xavier: What does NewRegistryDirectory do?
+// 	- new RegistryDirectory
+//		- new RouterChain
+// 		- new consumerConfigurationListener
+// 	- subscribe registryUrl.SubUrl asynchronously
 func NewRegistryDirectory(url *common.URL, registry registry.Registry) (cluster.Directory, error) {
 	if url.SubURL == nil {
 		return nil, perrors.Errorf("url is invalid, suburl can not be nil")
@@ -84,6 +91,7 @@ func NewRegistryDirectory(url *common.URL, registry registry.Registry) (cluster.
 
 	dir.consumerURL = dir.getConsumerUrl(url.SubURL)
 
+	// Xavier: in serviceDiscovery sample, routerChain will not be initialized.
 	if routerChain, err := chain.NewRouterChain(dir.consumerURL); err == nil {
 		dir.BaseDirectory.SetRouterChain(routerChain)
 	} else {
@@ -97,6 +105,11 @@ func NewRegistryDirectory(url *common.URL, registry registry.Registry) (cluster.
 }
 
 // subscribe from registry
+/* Xavier: url(parameter) represents a service instead of a registry, subscribe do the following things:
+	- add directory into consumerConfigurationListener
+	- new referenceConfigurationListener -> listeners are nil in this case
+	- call serviceDiscoveryRegistry.Subscribe()
+*/
 func (dir *RegistryDirectory) subscribe(url *common.URL) {
 	logger.Debugf("subscribe service :%s for RegistryDirectory.", url.Key())
 	dir.consumerConfigurationListener.addNotifyListener(dir)
@@ -459,6 +472,7 @@ type referenceConfigurationListener struct {
 	url       *common.URL
 }
 
+// Xavier: listener is nil in the sample of serviceDiscovery
 func newReferenceConfigurationListener(dir *RegistryDirectory, url *common.URL) *referenceConfigurationListener {
 	listener := &referenceConfigurationListener{directory: dir, url: url}
 	listener.InitWith(
