@@ -55,6 +55,7 @@ var (
 type DubboProtocol struct {
 	protocol.BaseProtocol
 	serverLock sync.Mutex
+	// Xavier: interfaceName -> rpc service instance
 	serviceMap *sync.Map                       // serviceMap is used to export multiple service by one server
 	serverMap  map[string]*triple.TripleServer // serverMap stores all exported server
 }
@@ -69,15 +70,18 @@ func NewDubboProtocol() *DubboProtocol {
 }
 
 // Export export dubbo3 service.
+// Xavier: export invoker by the protocol of dubbo v3(aka Triple)
 func (dp *DubboProtocol) Export(invoker protocol.Invoker) protocol.Exporter {
 	url := invoker.GetURL()
 	serviceKey := url.ServiceKey()
+	// Xavier: exporterMap & serviceMap are pointers
 	exporter := NewDubboExporter(serviceKey, invoker, dp.ExporterMap(), dp.serviceMap)
 	dp.SetExporterMap(serviceKey, exporter)
 	logger.Infof("Export service: %s", url.String())
 
 	key := url.GetParam(constant.BEAN_NAME_KEY, "")
 	var service interface{}
+	// Xavier: get real rpc service
 	service = config.GetProviderService(key)
 
 	serializationType := url.GetParam(constant.SERIALIZATION_KEY, constant.PROTOBUF_SERIALIZATION)

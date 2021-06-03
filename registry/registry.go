@@ -34,6 +34,10 @@ type Registry interface {
 	// Register is used for service provider calling, register services
 	// to registry. And it is also used for service consumer calling, register
 	// services cared about, for dubbo's admin monitoring.
+	/* Xavier:
+		Parameters:
+		- url: url is a provider url but is filtered if the key of "simplified" of registryUrl is set to true
+	*/
 	Register(url *common.URL) error
 
 	// UnRegister is required to support the contract:

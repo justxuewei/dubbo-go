@@ -154,6 +154,7 @@ func (lstn *ServiceInstancesChangedListenerImpl) OnEvent(e observer.Event) error
 }
 
 // getMetadataInfo get metadata info when METADATA_STORAGE_TYPE_PROPERTY_NAME is null
+// Xavier: Retrieving Metadata from metadata center or service's local
 func (lstn *ServiceInstancesChangedListenerImpl) getMetadataInfo(instance registry.ServiceInstance, revision string) (*common.MetadataInfo, error) {
 	var metadataStorageType string
 	var metadataInfo *common.MetadataInfo
@@ -163,6 +164,7 @@ func (lstn *ServiceInstancesChangedListenerImpl) getMetadataInfo(instance regist
 		metadataStorageType = instance.GetMetadata()[constant.METADATA_STORAGE_TYPE_PROPERTY_NAME]
 	}
 	if metadataStorageType == constant.REMOTE_METADATA_STORAGE_TYPE {
+		// Xavier: If metadata is stored in remote, get it from remote
 		remoteMetadataServiceImpl, err := extension.GetRemoteMetadataService()
 		if err != nil {
 			return nil, err
@@ -172,7 +174,9 @@ func (lstn *ServiceInstancesChangedListenerImpl) getMetadataInfo(instance regist
 			return nil, err
 		}
 	} else {
+		// Xavier: If stored in server's local, get it from server
 		var err error
+		// Xavier: Get an instance of MetadataService
 		proxyFactory := extension.GetMetadataServiceProxyFactory(constant.DEFAULT_KEY)
 		metadataService := proxyFactory.GetProxy(instance)
 		metadataInfo, err = metadataService.GetMetadataInfo(revision)

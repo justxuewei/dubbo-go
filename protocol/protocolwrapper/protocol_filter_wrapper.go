@@ -50,7 +50,9 @@ func (pfw *ProtocolFilterWrapper) Export(invoker protocol.Invoker) protocol.Expo
 	if pfw.protocol == nil {
 		pfw.protocol = extension.GetProtocol(invoker.GetURL().Protocol)
 	}
+	// Xavier: If filter is not set, invoker == invoker
 	invoker = BuildInvokerChain(invoker, constant.SERVICE_FILTER_KEY)
+	// Xavier: export invoker according to protocol
 	return pfw.protocol.Export(invoker)
 }
 

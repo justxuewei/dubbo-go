@@ -116,11 +116,14 @@ func NewBaseMetadataServiceProxyFactory(creator MetadataServiceProxyCreator) *Ba
 	}
 }
 
+// GetProxy
+// Xavier: get a proxy of metadata service for the service instance
 func (b *BaseMetadataServiceProxyFactory) GetProxy(ins registry.ServiceInstance) MetadataService {
 	key := ins.GetServiceName() + "##" + getExportedServicesRevision(ins)
 	if proxy, ok := b.proxies.Load(key); ok {
 		return proxy.(MetadataService)
 	}
+	// Xavier: create a proxy if it is empty
 	v, _ := b.proxies.LoadOrStore(key, b.creator(ins))
 	return v.(MetadataService)
 }

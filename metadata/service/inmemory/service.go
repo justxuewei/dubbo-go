@@ -157,13 +157,16 @@ func (mts *MetadataService) getSpecifiedService(services *sync.Map, serviceKey s
 
 // ExportURL can store the in memory
 func (mts *MetadataService) ExportURL(url *common.URL) (bool, error) {
+	// Xavier: If INTERFACE_KEY == "org.apache.dubbo.metadata.MetadataService", url is set to mts.metadataServiceUrl
 	if constant.METADATA_SERVICE_NAME == url.GetParam(constant.INTERFACE_KEY, "") {
 		mts.metadataServiceURL = url
 		return true, nil
 	}
+	// Xavier: if it is a plain service, create a MetadataInfo
 	mts.mOnce.Do(func() {
 		mts.metadataInfo = common.NewMetadataInfWithApp(config.GetApplicationConfig().Name)
 	})
+	// Xavier: create a ServiceInfo according to url, add the ServiceInfo into the MetadataInfo
 	mts.metadataInfo.AddService(common.NewServiceInfoWithURL(url))
 	return mts.addURL(mts.exportedServiceURLs, url), nil
 }

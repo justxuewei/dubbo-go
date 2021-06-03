@@ -54,6 +54,7 @@ func GetInMemoryMetadataServiceProxyFactory() service.MetadataServiceProxyFactor
 // we read the metadata from ins.Metadata()
 // and then create an Invoker instance
 // also we will mark this proxy as golang's proxy
+// Xavier: Core function of MetadataServiceProxy
 func createProxy(ins registry.ServiceInstance) service.MetadataService {
 	urls := buildStandardMetadataServiceURL(ins)
 	if len(urls) == 0 {

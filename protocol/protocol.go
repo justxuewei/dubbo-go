@@ -30,8 +30,10 @@ import (
 // Extension - protocol
 type Protocol interface {
 	// Export service for remote invocation
+	// Xavier: invoker -> exporter for server
 	Export(invoker Invoker) Exporter
 	// Refer a remote service
+	// Xavier: url -> invoker for client
 	Refer(url *common.URL) Invoker
 	// Destroy will destroy all invoker and exporter, so it only is called once.
 	Destroy()
@@ -52,6 +54,7 @@ type Exporter interface {
 
 // BaseProtocol is default protocol implement.
 type BaseProtocol struct {
+	// Xavier: serviceKey -> exporter
 	exporterMap *sync.Map
 	invokers    []Invoker
 }

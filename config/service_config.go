@@ -219,6 +219,7 @@ func (c *ServiceConfig) Export() error {
 
 			for _, regUrl := range regUrls {
 				regUrl.SubURL = ivkURL
+				// Xavier: at server side, invoker is an instance of ProxyInvoker
 				invoker := proxyFactory.GetInvoker(regUrl)
 				exporter := c.cacheProtocol.Export(invoker)
 				if exporter == nil {

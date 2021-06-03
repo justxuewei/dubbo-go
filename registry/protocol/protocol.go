@@ -132,7 +132,10 @@ func (proto *registryProtocol) GetRegistries() []registry.Registry {
 }
 
 // Refer provider service from registry center
-// Xavier: url represents to registry, url.SubUrl represents to a concrete service
+/* Xavier:
+	Parameters:
+	- url: represents to registry, url.SubUrl represents to a concrete service
+*/
 func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 	registryUrl := url
 	serviceUrl := registryUrl.SubURL
@@ -213,6 +216,7 @@ func (proto *registryProtocol) Export(invoker protocol.Invoker) protocol.Exporte
 		logger.Infof("The exporter has been cached, and will return cached exporter!")
 	} else {
 		wrappedInvoker := newWrappedInvoker(invoker, providerUrl)
+		// Xavier: start a service via TCP and return the exporter
 		cachedExporter = extension.GetProtocol(protocolwrapper.FILTER).Export(wrappedInvoker)
 		proto.bounds.Store(key, cachedExporter)
 		logger.Infof("The exporter has not been cached, and will return a new exporter!")

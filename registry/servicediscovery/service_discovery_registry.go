@@ -214,6 +214,7 @@ func shouldRegister(url *common.URL) bool {
 	parameters:
 	- url: url for a service
 	- notify: registryDirectory
+	the method is called by both server and client
 */
 func (s *serviceDiscoveryRegistry) Subscribe(url *common.URL, notify registry.NotifyListener) error {
 	if !shouldSubscribe(url) {
@@ -241,7 +242,8 @@ func (s *serviceDiscoveryRegistry) Subscribe(url *common.URL, notify registry.No
 	listener := s.serviceListeners[serviceNamesKey]
 	if listener == nil {
 		listener = event.NewServiceInstancesChangedListener(services)
-		// Xavier: serviceNameTmp is the name of service, "UserInfoServer"
+		// Xavier: serviceNameTmp is the name of service, "UserInfoServer", this for
+		// 	loop calls OnEvent of listener for each service in one app.
 		for _, serviceNameTmp := range services.Values() {
 			serviceName := serviceNameTmp.(string)
 			// Xavier: call EventPublishingServiceDiscovery::GetInstances() -> zookeeperServiceDiscovery::GetInstances()
