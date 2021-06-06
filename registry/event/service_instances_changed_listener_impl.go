@@ -35,30 +35,29 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/remoting"
 )
 
-// The Service Discovery Changed  Event Listener
+// ServiceInstancesChangedListenerImpl is a listener to listen ServiceDiscoveryChangedEvent
 type ServiceInstancesChangedListenerImpl struct {
 	serviceNames       *gxset.HashSet
 	listeners          map[string]registry.NotifyListener
+	// matchKeyOfServiceInstance -> []URL
 	serviceUrls        map[string][]*common.URL
+	// revision -> MetadataInfo, where revision is a hash code for the MetadataInfo
 	revisionToMetadata map[string]*common.MetadataInfo
-	// app name -> app's service instances
+	// serviceName -> []ServiceInstance
 	allInstances       map[string][]registry.ServiceInstance
 }
 
 func NewServiceInstancesChangedListener(services *gxset.HashSet) registry.ServiceInstancesChangedListener {
 	return &ServiceInstancesChangedListenerImpl{
-		// Xavier: serviceNamesHashSetService1,...,ServiceN
 		serviceNames:       services,
 		listeners:          make(map[string]registry.NotifyListener),
 		serviceUrls:        make(map[string][]*common.URL),
-		// Xavier: revision -> MetadataInfo
 		revisionToMetadata: make(map[string]*common.MetadataInfo),
 		allInstances:       make(map[string][]registry.ServiceInstance),
 	}
 }
 
 // OnEvent on ServiceInstancesChangedEvent the service instances change event
-// Xavier: e contains an app name and an array of ServerInstance.
 func (lstn *ServiceInstancesChangedListenerImpl) OnEvent(e observer.Event) error {
 	ce, ok := e.(*registry.ServiceInstancesChangedEvent)
 	if !ok {
@@ -66,18 +65,19 @@ func (lstn *ServiceInstancesChangedListenerImpl) OnEvent(e observer.Event) error
 	}
 	var err error
 	lstn.allInstances[ce.ServiceName] = ce.Instances
-	// Xavier: revision -> []ServiceInstance
 	revisionToInstances := make(map[string][]registry.ServiceInstance)
-	// Xavier: revision -> MetadataInfo
 	newRevisionToMetadata := make(map[string]*common.MetadataInfo)
-	// Xavier: serviceInfo -> set of revisions
 	localServiceToRevisions := make(map[*common.ServiceInfo]*gxset.HashSet)
 	protocolRevisionsToUrls := make(map[string]map[*gxset.HashSet][]*common.URL)
 	newServiceURLs := make(map[string][]*common.URL)
 
-	// Xavier: instances is an app's []ServerInstance
+	/*
+		for each service:
+		- update revisionToMetadata
+		- update serviceUrls
+		- notify notifyListener, see also RegistryDirectory::Notify()
+	*/
 	for _, instances := range lstn.allInstances {
-		// Xavier: instance is an instance of ServiceInstance
 		for _, instance := range instances {
 			if instance.GetMetadata() == nil {
 				logger.Warnf("Instance metadata is nil: %s", instance.GetHost())

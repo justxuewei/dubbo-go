@@ -48,6 +48,7 @@ const (
 type MetadataService struct {
 	service.BaseMetadataService
 	exportedServiceURLs   *sync.Map
+	// serviceKey -> SkipList
 	subscribedServiceURLs *sync.Map
 	serviceDefinitions    *sync.Map
 	lock                  *sync.RWMutex
@@ -184,7 +185,7 @@ func (mts *MetadataService) UnexportURL(url *common.URL) error {
 	return nil
 }
 
-// SubscribeURL can store the in memory
+// SubscribeURL can store the url in memory
 func (mts *MetadataService) SubscribeURL(url *common.URL) (bool, error) {
 	return mts.addURL(mts.subscribedServiceURLs, url), nil
 }

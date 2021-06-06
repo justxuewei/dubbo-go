@@ -368,8 +368,7 @@ func (c *URL) GetCacheInvokerMapKey() string {
 	return buildString
 }
 
-// ServiceKey gets a unique key of a service.
-// Xavier: the format of ServiceKey: group/iface:version
+// ServiceKey gets a unique key of a service, the format is "group/iface:version"
 func (c *URL) ServiceKey() string {
 	return ServiceKey(c.GetParam(constant.INTERFACE_KEY, strings.TrimPrefix(c.Path, "/")),
 		c.GetParam(constant.GROUP_KEY, ""), c.GetParam(constant.VERSION_KEY, ""))

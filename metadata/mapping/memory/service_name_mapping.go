@@ -41,8 +41,8 @@ func (i *InMemoryServiceNameMapping) Map(serviceInterface string, group string, 
 	return nil
 }
 
-// Get
-// QUESTION: Xavier: Does the HashSet only have one element?
+// Get returns a set containing the app name defined in client.yml, that is, all services will be mapped to the app.
+// Comments by Xavier: [QUESTION]I'm not sure that the comment whether is correct or not.
 func (i *InMemoryServiceNameMapping) Get(serviceInterface string, group string, version string, protocol string) (*gxset.HashSet, error) {
 	return gxset.NewSet(config.GetApplicationConfig().Name), nil
 }

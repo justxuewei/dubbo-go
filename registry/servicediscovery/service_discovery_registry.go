@@ -65,12 +65,11 @@ type serviceDiscoveryRegistry struct {
 	serviceDiscovery                 registry.ServiceDiscovery
 	subscribedServices               *gxset.HashSet
 	serviceNameMapping               mapping.ServiceNameMapping
-	// Xavier: typo: metaDataService -> metadataService
 	metaDataService                  service.MetadataService
 	registeredListeners              *gxset.HashSet
 	subscribedURLsSynthesizers       []synthesizer.SubscribedURLsSynthesizer
 	serviceRevisionExportedURLsCache map[string]map[string][]*common.URL
-	// Xavier: app -> listener
+	// Xavier: service -> listener
 	serviceListeners                 map[string]registry.ServiceInstancesChangedListener
 }
 
@@ -209,45 +208,41 @@ func shouldRegister(url *common.URL) bool {
 	return false
 }
 
-// Subscribe
-/* Xavier:
-	parameters:
-	- url: url for a service
-	- notify: registryDirectory
-	the method is called by both server and client
+/*
+	Subscribe is intended for interface-level model originally, application-level model, however, reuses this method,
+ 	the meanings of the variables are different in aforementioned models. This method is called by consumer, see also
+	RegistryDirectory::subscribe().
+	// TODO: supply what does Subscribe() do
+
+	Parameters:
+	- url: a RPCService url
+	- notify: a registryDirectory instance
 */
 func (s *serviceDiscoveryRegistry) Subscribe(url *common.URL, notify registry.NotifyListener) error {
 	if !shouldSubscribe(url) {
 		return nil
 	}
-	// Xavier: store the url into metadataService's subscribedServiceURLs
+	// store the url into metadataService's subscribedServiceURLs
 	_, err := s.metaDataService.SubscribeURL(url)
 	if err != nil {
 		return perrors.WithMessage(err, "subscribe url error: "+url.String())
 	}
-	// Xavier: get services from registry using curator-x-discovery in the case of using zookeeper as registry,
-	// 	services is a hash set containing all services in an application
+
 	services := s.getServices(url)
 	if services.Empty() {
 		return perrors.Errorf("Should has at least one way to know which services this interface belongs to, "+
 			"subscription url:%s", url.String())
 	}
 	// FIXME ServiceNames.String() is not good
-	// Xavier: new features in dubbo-go v3,
-	// 	serviceNamesKey == HashSetUserInfoService
 	serviceNamesKey := services.String()
-	// Xavier: group/iface:version:protocol
 	protocolServiceKey := url.ServiceKey() + ":" + url.Protocol
-	// Xavier: listener is an instance of serviceInstancesChangedListener
 	listener := s.serviceListeners[serviceNamesKey]
-	if listener == nil {
+
+	if listener == nil { // the services haven't listener yes
 		listener = event.NewServiceInstancesChangedListener(services)
-		// Xavier: serviceNameTmp is the name of service, "UserInfoServer", this for
-		// 	loop calls OnEvent of listener for each service in one app.
+		// dispatch ServiceInstancesChangedEvent for each service in services
 		for _, serviceNameTmp := range services.Values() {
 			serviceName := serviceNameTmp.(string)
-			// Xavier: call EventPublishingServiceDiscovery::GetInstances() -> zookeeperServiceDiscovery::GetInstances()
-			// 	instances is an array of DefaultServiceInstance
 			instances := s.serviceDiscovery.GetInstances(serviceName)
 			err = listener.OnEvent(&registry.ServiceInstancesChangedEvent{
 				ServiceName: serviceName,
@@ -276,6 +271,8 @@ func (s *serviceDiscoveryRegistry) registerServiceInstancesChangedListener(url *
 
 }
 
+// getUrlKey returns string, which format is
+//	"{protocol}://{ip}:{port}/{path}?version={version}&group={group}&protocol={protocol}"
 func getUrlKey(url *common.URL) string {
 	var bf bytes.Buffer
 	if len(url.Protocol) != 0 {
@@ -318,12 +315,15 @@ func shouldSubscribe(url *common.URL) bool {
 	return !shouldRegister(url)
 }
 
+// getServices get interface-level/application-level services for the url
 func (s *serviceDiscoveryRegistry) getServices(url *common.URL) *gxset.HashSet {
 	services := gxset.NewSet()
+	// service-level model: url to interface-level services, i.e. ("ServiceName1", "ServiceName2", ...)
 	serviceNames := url.GetParam(constant.PROVIDED_BY, "")
 	if len(serviceNames) > 0 {
 		services = parseServices(serviceNames)
 	}
+	// app-level model: url to application-level services, i.e. ("AppName1")
 	if services.Empty() {
 		services = s.findMappedServices(url)
 		if services.Empty() {
@@ -333,6 +333,7 @@ func (s *serviceDiscoveryRegistry) getServices(url *common.URL) *gxset.HashSet {
 	return services
 }
 
+// findMappedServices get the application-level services from serviceNameMapping
 func (s *serviceDiscoveryRegistry) findMappedServices(url *common.URL) *gxset.HashSet {
 	serviceInterface := url.GetParam(constant.INTERFACE_KEY, url.Path)
 	group := url.GetParam(constant.GROUP_KEY, "")

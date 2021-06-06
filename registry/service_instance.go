@@ -32,7 +32,23 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/common/logger"
 )
 
-// ServiceInstance is the model class of an instance of a service, which is used for service registration and discovery.
+/*
+	ServiceInstance is the model for service instance, which is used for service registration and discovery. It could
+		represent a application service instance and a RPCService instance.
+
+	As an application service instance:
+	- GetServiceName() returns the app name
+	- GetHost() and GetPort() return the IP Address and Port of the app
+	- GetMetadata() return metadata for the app, the example of metadata is listed below:
+		- "dubbo.endpoints" -> [{"port":20001,"protocol":"dubbo"}]
+		- "dubbo.metadata-service.url-params" -> {"application":"UserInfoServer","group":"UserInfoServer","port":"20001","protocol":"dubbo","release":"dubbo-golang-1.5.6","timestamp":"1622960268","version":"1.0.0"}
+		- "dubbo.metadata.revision" -> "2628601274"
+		- "dubbo.metadata.storage-type" -> "local"
+		- ...
+
+	As a RPCService instance:
+	- TODO: comment supplement for a RPCService instance is required
+*/
 type ServiceInstance interface {
 
 	// GetID will return this instance's id. It should be unique.
