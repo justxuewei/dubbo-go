@@ -98,6 +98,7 @@ func NewRegistryDirectory(url *common.URL, registry registry.Registry) (cluster.
 		logger.Warnf("fail to create router chain with url: %s, err is: %v", url.SubURL, err)
 	}
 
+	// Xavier: Create a consumer configuration listener
 	dir.consumerConfigurationListener = newConsumerConfigurationListener(dir)
 
 	go dir.subscribe(url.SubURL)
