@@ -54,6 +54,9 @@ type Exporter interface {
 
 // BaseProtocol is default protocol implement.
 type BaseProtocol struct {
+	// Xuewei:
+	// key -> serverKey
+	// value -> exporter
 	exporterMap *sync.Map
 	invokers    []Invoker
 }
@@ -124,6 +127,7 @@ type BaseExporter struct {
 }
 
 // NewBaseExporter creates a new BaseExporter
+// Xuewei: 这就是简单把 key, invoker & exporterMap 保存起来了
 func NewBaseExporter(key string, invoker Invoker, exporterMap *sync.Map) *BaseExporter {
 	return &BaseExporter{
 		key:         key,

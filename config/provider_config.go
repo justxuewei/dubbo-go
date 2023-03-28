@@ -71,6 +71,8 @@ func (c *ProviderConfig) check() error {
 	return verify(c)
 }
 
+// Xuewei: 初始化 provider configs
+// - 
 func (c *ProviderConfig) Init(rc *RootConfig) error {
 	if c == nil {
 		return nil
@@ -91,6 +93,8 @@ func (c *ProviderConfig) Init(rc *RootConfig) error {
 		if serviceConfig.Interface == "" {
 			service := GetProviderService(key)
 			// try to use interface name defined by pb
+			// Xuewei: 通过尝试将 service 转换为 TriplePBService 来确定是否是一
+			// 个 Triple + PB 协议的 service
 			supportPBPackagerNameSerivce, ok := service.(common.TriplePBService)
 			if !ok {
 				logger.Errorf("Service with reference = %s is not support read interface name from it."+
@@ -100,9 +104,11 @@ func (c *ProviderConfig) Init(rc *RootConfig) error {
 				continue
 			} else {
 				// use interface name defined by pb
+				// Xuewei: 通过 XXX_InterfaceName 获取 service 的 interface name
 				serviceConfig.Interface = supportPBPackagerNameSerivce.XXX_InterfaceName()
 			}
 		}
+		// Xuewei: 这个是什么？
 		if err := serviceConfig.Init(rc); err != nil {
 			return err
 		}
@@ -110,6 +116,9 @@ func (c *ProviderConfig) Init(rc *RootConfig) error {
 		serviceConfig.adaptiveService = c.AdaptiveService
 	}
 
+	// Xuewei: 检查是否有 Triple 协议，为 Triple 增加两个额外的方法
+	// - HealthCheckServiceTypeName -> 健康检查
+	// - ReflectionServiceTypeName -> 反射服务
 	for k, v := range rc.Protocols {
 		if v.Name == tripleConstant.TRIPLE {
 			// Auto create grpc based health check service.
@@ -155,6 +164,9 @@ func (c *ProviderConfig) Init(rc *RootConfig) error {
 }
 
 func (c *ProviderConfig) Load() {
+	// 遍历 provider service
+	// key -> service name
+	// value -> rpc service
 	for registeredTypeName, service := range GetProviderServiceMap() {
 		serviceConfig, ok := c.Services[registeredTypeName]
 		if !ok {

@@ -41,6 +41,7 @@ type DubboExporter struct {
 }
 
 // NewDubboExporter get a Dubbo3Exporter.
+// Xuewei: 
 func NewDubboExporter(key string, invoker protocol.Invoker, exporterMap *sync.Map, serviceMap *sync.Map) *DubboExporter {
 	return &DubboExporter{
 		BaseExporter: *protocol.NewBaseExporter(key, invoker, exporterMap),

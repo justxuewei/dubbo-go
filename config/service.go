@@ -43,6 +43,8 @@ func SetConsumerService(service common.RPCService) {
 }
 
 // SetProviderService is called by init() of implement of RPCService
+// 在 server 端会到用这个方法实现 service name -> RPC service 的映射
+// Triple 的 service name 是它的结构体名字
 func SetProviderService(service common.RPCService) {
 	ref := common.GetReference(service)
 	proServicesLock.Lock()

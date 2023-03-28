@@ -80,6 +80,7 @@ type ServiceConfig struct {
 	TracingKey                  string            `yaml:"tracing-key" json:"tracing-key,omitempty" propertiy:"tracing-key"`
 
 	RCProtocolsMap  map[string]*ProtocolConfig
+	// Xuewei: 可以理解为 RCRegistriesMap 获取的是 RegistryConfig 的 Registry 信息
 	RCRegistriesMap map[string]*RegistryConfig
 	ProxyFactoryKey string
 	adaptiveService bool
@@ -88,6 +89,9 @@ type ServiceConfig struct {
 	export          bool // a flag to control whether the current service should export or not
 	rpcService      common.RPCService
 	cacheMutex      sync.Mutex
+	// Xuewei: 这个是一个 RegistryProtocol
+	// s.cacheProtocol = extension.GetProtocol(constant.RegistryProtocol)
+	// 直接看 registryProtocol 结构体
 	cacheProtocol   protocol.Protocol
 	exportersLock   sync.Mutex
 	exporters       []protocol.Exporter
@@ -125,6 +129,7 @@ func (s *ServiceConfig) Init(rc *RootConfig) error {
 	if len(s.RCProtocolsMap) == 0 {
 		s.RCProtocolsMap = rc.Protocols
 	}
+	// Xuewei: 设置 proxy factory
 	if rc.Provider != nil {
 		s.ProxyFactoryKey = rc.Provider.ProxyFactory
 	}
@@ -225,6 +230,7 @@ func getRandomPort(protocolConfigs []*ProtocolConfig) *list.List {
 }
 
 // Export exports the service
+// Xuewei: 这个方法非常重要，是将 service 注册到注册中心的
 func (s *ServiceConfig) Export() error {
 	// TODO: delay export
 	if s.unexported != nil && s.unexported.Load() {
@@ -291,6 +297,7 @@ func (s *ServiceConfig) Export() error {
 		}
 
 		if len(regUrls) > 0 {
+			// Xuewei: 有注册中心地址
 			s.cacheMutex.Lock()
 			if s.cacheProtocol == nil {
 				logger.Debugf(fmt.Sprintf("First load the registry protocol, url is {%v}!", ivkURL))
@@ -300,7 +307,9 @@ func (s *ServiceConfig) Export() error {
 
 			for _, regUrl := range regUrls {
 				setRegistrySubURL(ivkURL, regUrl)
+				// Xuewei: 初步创建了一个 invoker
 				invoker := proxyFactory.GetInvoker(regUrl)
+				// Xuewei: 调用的是 registryProtocol.Export()
 				exporter := s.cacheProtocol.Export(invoker)
 				if exporter == nil {
 					return perrors.New(fmt.Sprintf("Registry protocol new exporter error, registry is {%v}, url is {%v}", regUrl, ivkURL))
@@ -308,6 +317,7 @@ func (s *ServiceConfig) Export() error {
 				s.exporters = append(s.exporters, exporter)
 			}
 		} else {
+			// Xuewei: 无有注册中心地址
 			if ivkURL.GetParam(constant.InterfaceKey, "") == constant.MetadataServiceName {
 				ms, err := extension.GetLocalMetadataService("")
 				if err != nil {
@@ -332,6 +342,9 @@ func (s *ServiceConfig) Export() error {
 }
 
 //setRegistrySubURL set registry sub url is ivkURl
+// Xuewei: 
+// - 给 invoker 的 url 新增一个 RegistryKey -> regUrl.GetParam(constant.RegistryKey)
+// - registry 的 url 的 suburl -> invoker 的 url
 func setRegistrySubURL(ivkURL *common.URL, regUrl *common.URL) {
 	ivkURL.AddParam(constant.RegistryKey, regUrl.GetParam(constant.RegistryKey, ""))
 	regUrl.SubURL = ivkURL

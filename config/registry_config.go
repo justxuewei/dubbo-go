@@ -207,6 +207,7 @@ func (c *RegistryConfig) toURLs(roleType common.RoleType) ([]*common.URL, error)
 	return urls, err
 }
 
+// Xuewei: 获取注册中心，如果有多个则返回多个注册中心的 URL
 func loadRegistries(registryIds []string, registries map[string]*RegistryConfig, roleType common.RoleType) []*common.URL {
 	var registryURLs []*common.URL
 	//trSlice := strings.Split(targetRegistries, ",")

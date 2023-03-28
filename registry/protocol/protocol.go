@@ -56,6 +56,7 @@ var (
 	}
 )
 
+// Xuewei: 这个是 ServiceConfig.cacheProtocol 的具体实现
 type registryProtocol struct {
 	// Registry Map<RegistryAddress, Registry>
 	registries *sync.Map
@@ -63,6 +64,9 @@ type registryProtocol struct {
 	// the services that have been exposed are no longer exposed.
 	// providerurl <--> exporter
 	bounds                        *sync.Map
+	// Xuewei:
+	// key -> overrideURL（把 invoker 的 URL 的 protocol 修改为 provider）
+	// value -> overrideSubscribeListener
 	overrideListeners             *sync.Map
 	serviceConfigurationListeners *sync.Map
 	providerConfigurationListener *providerConfigurationListener
@@ -73,6 +77,7 @@ func init() {
 	extension.SetProtocol(constant.RegistryProtocol, GetProtocol)
 }
 
+// Xuewei: RegistryProtocol 是 constant.RegistryProtocol 的默认实现
 func newRegistryProtocol() *registryProtocol {
 	return &registryProtocol{
 		registries: &sync.Map{},
@@ -120,6 +125,7 @@ func filterHideKey(url *common.URL) *common.URL {
 	return url.CloneExceptParams(removeSet)
 }
 
+// Xuewei: 在第一个 registryProtocol.Export()
 func (proto *registryProtocol) initConfigurationListeners() {
 	proto.overrideListeners = &sync.Map{}
 	proto.serviceConfigurationListeners = &sync.Map{}
@@ -180,17 +186,24 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 }
 
 // Export provider service to registry center
+// Xuewei: 
 func (proto *registryProtocol) Export(originInvoker protocol.Invoker) protocol.Exporter {
 	proto.once.Do(func() {
 		proto.initConfigurationListeners()
 	})
+	// Xuewei: invoker.URL
 	registryUrl := getRegistryUrl(originInvoker)
+	// Xuewei: invoker.SubURL
 	providerUrl := getProviderUrl(originInvoker)
 
+	// Xuewei: 把 providerUrl 的 protocol 更换为了 "provider"
 	overriderUrl := getSubscribedOverrideUrl(providerUrl)
 	// Deprecated! subscribe to override rules in 2.6.x or before.
+	// Xuewei: 创建了一个 overrideSubscribeListener
 	overrideSubscribeListener := newOverrideSubscribeListener(overriderUrl, originInvoker, proto)
+	// Xuewei: 将 overrideSubscribeListener 保存到 proto.overrideListeners
 	proto.overrideListeners.Store(overriderUrl, overrideSubscribeListener)
+	// Xuewei: 
 	proto.providerConfigurationListener.OverrideUrl(providerUrl)
 	serviceConfigurationListener := newServiceConfigurationListener(overrideSubscribeListener, providerUrl)
 	proto.serviceConfigurationListeners.Store(providerUrl.ServiceKey(), serviceConfigurationListener)
@@ -294,6 +307,7 @@ type overrideSubscribeListener struct {
 	configurator  config_center.Configurator
 }
 
+// Xuewei: 创建了一个 overrideSubscribeListener，只是赋值，没有做其他的事情
 func newOverrideSubscribeListener(overriderUrl *common.URL, invoker protocol.Invoker, proto *registryProtocol) *overrideSubscribeListener {
 	return &overrideSubscribeListener{url: overriderUrl, originInvoker: invoker, protocol: proto}
 }
@@ -397,6 +411,10 @@ func isMatchCategory(category string, categories string) bool {
 	}
 }
 
+// Xuewei: 这个函数
+// - 把 providerUrl 的 protocol 替换为 "provider"
+// - 参数 category -> configurators
+// - 参数 check -> false
 func getSubscribedOverrideUrl(providerUrl *common.URL) *common.URL {
 	newUrl := providerUrl.Clone()
 	newUrl.Protocol = constant.ProviderProtocol
@@ -511,6 +529,7 @@ func newExporterChangeableWrapper(originInvoker protocol.Invoker, exporter proto
 	}
 }
 
+// Xuewei: 包含了一个 BaseConfigurationListener 和一个 map
 type providerConfigurationListener struct {
 	registry.BaseConfigurationListener
 	overrideListeners *sync.Map

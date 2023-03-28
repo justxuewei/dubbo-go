@@ -42,6 +42,7 @@ func init() {
 }
 
 // DefaultProxyFactory is the default proxy factory
+// Xuewei: 这个是 default proxy factory 的实现
 type DefaultProxyFactory struct { // delegate ProxyFactory
 }
 

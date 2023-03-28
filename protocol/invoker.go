@@ -50,6 +50,7 @@ type Invoker interface {
 }
 
 // BaseInvoker provides default invoker implements Invoker
+// Xuewei: BaseInvoker 的作用就是保存下 invoker 的 url，同时保存了一些状态
 type BaseInvoker struct {
 	url       *common.URL
 	available uatomic.Bool

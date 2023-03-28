@@ -51,6 +51,8 @@ type TriplePBService interface {
 // If the service implemented the ReferencedRPCService interface,
 // it will call the Reference method. If not, it will
 // return the struct name as the reference id.
+// Xuewei: 要不然调用 Reference() 方法获取 service 名，要不然获取 service 的结构
+// 体名字。
 func GetReference(service RPCService) string {
 	if s, ok := service.(ReferencedRPCService); ok {
 		return s.Reference()
@@ -200,6 +202,8 @@ func (sm *serviceMap) GetInterface(interfaceName string) []*Service {
 }
 
 // Register registers a service by @interfaceName and @protocol
+// Xuewei: 将 service 注册到 serviceMap & interfaceMap，会寻找 rcvr 的合适的
+// methods，然后将 methods 名称用 "," 合并后返回。
 func (sm *serviceMap) Register(interfaceName, protocol, group, version string, rcvr RPCService) (string, error) {
 	if sm.serviceMap[protocol] == nil {
 		sm.serviceMap[protocol] = make(map[string]*Service)

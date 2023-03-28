@@ -391,6 +391,7 @@ func (c *URL) ServiceKey() string {
 		c.GetParam(constant.GroupKey, ""), c.GetParam(constant.VersionKey, ""))
 }
 
+// Xuewei: [group/]{intf}[:version]
 func ServiceKey(intf string, group string, version string) string {
 	if intf == "" {
 		return ""

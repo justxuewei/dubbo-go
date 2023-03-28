@@ -60,7 +60,13 @@ var (
 type DubboProtocol struct {
 	protocol.BaseProtocol
 	serverLock sync.Mutex
+	// Xuewei:
+	// key -> interface key
+	// value -> service (common.RPCService)
 	serviceMap *sync.Map                       // serviceMap is used to export multiple service by one server
+	// Xuewei:
+	// key -> url
+	// value -> Dubbo3Server
 	serverMap  map[string]*triple.TripleServer // serverMap stores all exported server
 }
 
@@ -74,13 +80,26 @@ func NewDubboProtocol() *DubboProtocol {
 }
 
 // Export export dubbo3 service.
+// Xuewei:
+// 1. Build a new service.
+// 2. Build a new server.
+// 3. Build a new exporter.
+// 4. Serve the service.
+// 5. Return an exporter.
+// 问题：
+// 1. Service 到底是个什么东西？
+// 2. Export 到底是个什么东西？
 func (dp *DubboProtocol) Export(invoker protocol.Invoker) protocol.Exporter {
 	url := invoker.GetURL()
 	serviceKey := url.ServiceKey()
+	// Xuewei: dp.ExporterMap() -> DubboProtocol::baseProtocol::exporterMap
 	exporter := NewDubboExporter(serviceKey, invoker, dp.ExporterMap(), dp.serviceMap)
 	dp.SetExporterMap(serviceKey, exporter)
 	logger.Infof("[Triple Protocol] Export service: %s", url.String())
 
+	// Xuewei: 这块存疑，
+	// 什么是 bean name？
+	// 什么是 service？一个 interface{}？
 	key := url.GetParam(constant.BeanNameKey, "")
 	var service interface{}
 	service = config.GetProviderService(key)
@@ -88,7 +107,9 @@ func (dp *DubboProtocol) Export(invoker protocol.Invoker) protocol.Exporter {
 	serializationType := url.GetParam(constant.SerializationKey, constant.ProtobufSerialization)
 	var triSerializationType tripleConstant.CodecType
 
+	// Xuewei: 如果 serialization 是 PB 类型的
 	if serializationType == constant.ProtobufSerialization {
+		// Xuewei: 从 service 中找一个 "XXX_SetProxyImpl" 的方法
 		m, ok := reflect.TypeOf(service).MethodByName("XXX_SetProxyImpl")
 		if !ok {
 			logger.Errorf("PB service with key = %s is not support XXX_SetProxyImpl to pb."+
@@ -99,8 +120,10 @@ func (dp *DubboProtocol) Export(invoker protocol.Invoker) protocol.Exporter {
 		if invoker == nil {
 			panic(fmt.Sprintf("no invoker found for servicekey: %v", url.ServiceKey()))
 		}
+		// XXX_SetProxyImpl 的输入参数是 [service, invoker]
 		in := []reflect.Value{reflect.ValueOf(service)}
 		in = append(in, reflect.ValueOf(invoker))
+		// 调用这个方法
 		m.Func.Call(in)
 		triSerializationType = tripleConstant.PBCodecName
 	} else {
