@@ -63,11 +63,17 @@ type registryProtocol struct {
 	// To solve the problem of RMI repeated exposure port conflicts,
 	// the services that have been exposed are no longer exposed.
 	// providerurl <--> exporter
+	// Xuewei:
+	// key -> service cache key，详见 getCacheKey()
+	// value -> cachedExporter 实例
 	bounds                        *sync.Map
 	// Xuewei:
 	// key -> overrideURL（把 invoker 的 URL 的 protocol 修改为 provider）
 	// value -> overrideSubscribeListener
 	overrideListeners             *sync.Map
+	// Xuewei:
+	// key -> providerUrl 的 interface
+	// value -> serviceConfigurationListener 实例
 	serviceConfigurationListeners *sync.Map
 	providerConfigurationListener *providerConfigurationListener
 	once                          sync.Once
@@ -99,6 +105,8 @@ func (proto *registryProtocol) getRegistry(registryUrl *common.URL) registry.Reg
 	return reg.(registry.Registry)
 }
 
+// Xuewei: 获取 provider 的缓存 key，说白了就是把 provider 的 url 去掉 dynamic
+// 和 enabled 两个 params，然后转换为 string
 func getCacheKey(invoker protocol.Invoker) string {
 	url := getProviderUrl(invoker)
 	delKeys := gxset.NewSet("dynamic", "enabled")
@@ -186,8 +194,9 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 }
 
 // Export provider service to registry center
-// Xuewei: 
+// Xuewei: 这个 originInvoker 的用 regURL 创建的
 func (proto *registryProtocol) Export(originInvoker protocol.Invoker) protocol.Exporter {
+	// Xuewei: initConfigurationListeners() 只会被执行一次
 	proto.once.Do(func() {
 		proto.initConfigurationListeners()
 	})
@@ -203,8 +212,9 @@ func (proto *registryProtocol) Export(originInvoker protocol.Invoker) protocol.E
 	overrideSubscribeListener := newOverrideSubscribeListener(overriderUrl, originInvoker, proto)
 	// Xuewei: 将 overrideSubscribeListener 保存到 proto.overrideListeners
 	proto.overrideListeners.Store(overriderUrl, overrideSubscribeListener)
-	// Xuewei: 
+	// Xuewei: 看起来只是改写了一下 URL，与 triple 没啥关系，略过。
 	proto.providerConfigurationListener.OverrideUrl(providerUrl)
+	// Xuewei: 创建了 ConfigurationListener 的实例
 	serviceConfigurationListener := newServiceConfigurationListener(overrideSubscribeListener, providerUrl)
 	proto.serviceConfigurationListeners.Store(providerUrl.ServiceKey(), serviceConfigurationListener)
 	serviceConfigurationListener.OverrideUrl(providerUrl)
@@ -244,6 +254,8 @@ func (proto *registryProtocol) Export(originInvoker protocol.Invoker) protocol.E
 	return exporter
 }
 
+// Xuewei: 从 proto.bound（一个 map）找 cache key 是否存在，
+// 如果存在，就
 func (proto *registryProtocol) doLocalExport(originInvoker protocol.Invoker, providerUrl *common.URL) *exporterChangeableWrapper {
 	key := getCacheKey(originInvoker)
 	cachedExporter, loaded := proto.bounds.Load(key)
@@ -481,11 +493,14 @@ func GetProtocol() protocol.Protocol {
 	return regProtocol
 }
 
+// Xuewei: invoker delegate 包括了
 type invokerDelegate struct {
 	invoker protocol.Invoker
 	protocol.BaseInvoker
 }
 
+// Xuewei: 在 doLocalExport() 中，invoker 是一个包含 regURL 的 invoker，URL 则是
+// 真正的 provider 的 URL
 func newInvokerDelegate(invoker protocol.Invoker, url *common.URL) *invokerDelegate {
 	return &invokerDelegate{
 		invoker:     invoker,
@@ -555,6 +570,7 @@ func (listener *providerConfigurationListener) Process(event *config_center.Conf
 	})
 }
 
+// Xuewei: 是一个 ConfigurationListener 接口的实现
 type serviceConfigurationListener struct {
 	registry.BaseConfigurationListener
 	overrideListener *overrideSubscribeListener

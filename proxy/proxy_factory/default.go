@@ -74,6 +74,8 @@ func (factory *DefaultProxyFactory) GetAsyncProxy(invoker protocol.Invoker, call
 }
 
 // GetInvoker gets a invoker
+// Xuewei: 这个方法就是创建了一个 proxy invoker，包含了一个 base invoker，它只是
+// 把 url 进行了一层封装
 func (factory *DefaultProxyFactory) GetInvoker(url *common.URL) protocol.Invoker {
 	return &ProxyInvoker{
 		BaseInvoker: *protocol.NewBaseInvoker(url),

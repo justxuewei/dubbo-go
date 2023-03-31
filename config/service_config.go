@@ -307,7 +307,7 @@ func (s *ServiceConfig) Export() error {
 
 			for _, regUrl := range regUrls {
 				setRegistrySubURL(ivkURL, regUrl)
-				// Xuewei: 初步创建了一个 invoker
+				// Xuewei: 使用 regURL（注册中心 URL）创建了一个 invoker
 				invoker := proxyFactory.GetInvoker(regUrl)
 				// Xuewei: 调用的是 registryProtocol.Export()
 				exporter := s.cacheProtocol.Export(invoker)

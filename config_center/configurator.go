@@ -22,6 +22,7 @@ import (
 )
 
 // Configurator is the interface which wraps  GetUrl and Configure method.
+// Xuewei: Configurator 只有 OverrideConfigurator 一个实现，直接看这个那个就行。
 type Configurator interface {
 	GetUrl() *common.URL
 	Configure(url *common.URL)

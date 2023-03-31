@@ -36,6 +36,7 @@ func init() {
 	extension.SetDefaultConfigurator(newConfigurator)
 }
 
+// Xuewei: 这里就是直接传入了一个 url
 func newConfigurator(url *common.URL) config_center.Configurator {
 	return &overrideConfigurator{configuratorUrl: url}
 }
@@ -48,6 +49,7 @@ func (c *overrideConfigurator) GetUrl() *common.URL {
 	return c.configuratorUrl
 }
 
+// Xuewei: 
 func (c *overrideConfigurator) Configure(url *common.URL) {
 	// remove configuratorUrl some param that can not be configured
 	if c.configuratorUrl.GetParam(constant.EnabledKey, "true") == "false" || len(c.configuratorUrl.Location) == 0 {
@@ -59,6 +61,7 @@ func (c *overrideConfigurator) Configure(url *common.URL) {
 	if len(apiVersion) != 0 {
 		currentSide := url.GetParam(constant.SideKey, "")
 		configuratorSide := c.configuratorUrl.GetParam(constant.SideKey, "")
+		// Xuewei: 如果是 consumer + port 是 0
 		if currentSide == configuratorSide && common.DubboRole[common.CONSUMER] == currentSide && c.configuratorUrl.Port == "0" {
 			localIP := common.GetLocalIp()
 			c.configureIfMatch(localIP, url)
@@ -106,8 +109,11 @@ func (c *overrideConfigurator) configureIfMatchInternal(url *common.URL) {
 }
 
 // configureIfMatch translate from java, compatible rules in java
+// Xuewei: 这块看起来与 triple 没啥关系，略过。。
 func (c *overrideConfigurator) configureIfMatch(host string, url *common.URL) {
+	// Xuewei: 如果 IP 是 "0.0.0.0" 或者 IP 与 host 一致
 	if constant.AnyHostValue == c.configuratorUrl.Ip || host == c.configuratorUrl.Ip {
+		// Xuewei: 从 URL 取出 "providerAddresses" 参数
 		providers := c.configuratorUrl.GetParam(constant.OverrideProvidersKey, "")
 		if len(providers) == 0 || strings.Contains(providers, url.Location) || strings.Contains(providers, constant.AnyHostValue) {
 			c.configureIfMatchInternal(url)
