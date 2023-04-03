@@ -262,6 +262,9 @@ func (proto *registryProtocol) doLocalExport(originInvoker protocol.Invoker, pro
 	if !loaded {
 		// new Exporter
 		invokerDelegate := newInvokerDelegate(originInvoker, providerUrl)
+		// Xuewei: 这个行做的事情有点多，我们先看
+		// extension.GetProtocol(protocolwrapper.FILTER).Export(invokerDelegate)
+		// 
 		cachedExporter = newExporterChangeableWrapper(originInvoker,
 			extension.GetProtocol(protocolwrapper.FILTER).Export(invokerDelegate))
 		proto.bounds.Store(key, cachedExporter)
@@ -495,7 +498,9 @@ func GetProtocol() protocol.Protocol {
 
 // Xuewei: invoker delegate 包括了
 type invokerDelegate struct {
+	// regURL
 	invoker protocol.Invoker
+	// provider URL
 	protocol.BaseInvoker
 }
 

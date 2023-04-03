@@ -88,6 +88,7 @@ type ProxyInvoker struct {
 }
 
 // Invoke is used to call service method by invocation
+// Xuewei: 这里是 proxy invoker 如何调用方法
 func (pi *ProxyInvoker) Invoke(ctx context.Context, invocation protocol.Invocation) protocol.Result {
 	result := &protocol.RPCResult{}
 	result.SetAttachments(invocation.Attachments())

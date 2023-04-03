@@ -45,6 +45,7 @@ func init() {
 
 // ProtocolFilterWrapper
 // protocol in url decide who ProtocolFilterWrapper.protocol is
+// Xuewei: ProtocolFilterWrapper 是一个 protocol 的实现
 type ProtocolFilterWrapper struct {
 	protocol protocol.Protocol
 }
@@ -55,6 +56,8 @@ func (pfw *ProtocolFilterWrapper) Export(invoker protocol.Invoker) protocol.Expo
 		pfw.protocol = extension.GetProtocol(invoker.GetURL().Protocol)
 	}
 	invoker = BuildInvokerChain(invoker, constant.ServiceFilterKey)
+	// Xuewei: 这里就会调用真正协议的 Export() 方法，比如 triple 协议就会调用
+	// triple 的 Export()
 	return pfw.protocol.Export(invoker)
 }
 
@@ -75,6 +78,8 @@ func (pfw *ProtocolFilterWrapper) Destroy() {
 	pfw.protocol.Destroy()
 }
 
+// Xuewei: 构建 invoker 链
+// 
 func BuildInvokerChain(invoker protocol.Invoker, key string) protocol.Invoker {
 	filterName := invoker.GetURL().GetParam(key, "")
 	if filterName == "" {
